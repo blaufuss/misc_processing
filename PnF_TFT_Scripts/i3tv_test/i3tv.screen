@@ -1,0 +1,3 @@
+zombie kr
+screen bash -c 'while true; do ./env-shell.sh ./i3tv.py; sleep 5; done'
+screen bash -c 'while true; do ./env-shell.sh i3tvtpd conf.py; sleep 5; done'

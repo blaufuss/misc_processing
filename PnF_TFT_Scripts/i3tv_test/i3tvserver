@@ -1,0 +1,104 @@
+#!/bin/sh
+ 
+. /etc/rc.d/init.d/functions
+
+function usage()
+{
+    echo "usage: i3tvserver {start|restart|status|stop}"
+}
+
+SCRIPT=jeb-server-loop
+
+function getState()
+{ 
+    pid=`ps -ef | grep i3tv | grep -v "grep" | grep -v "i3tvserver" | awk '{print $2}'`
+    if test -n "$pid"
+	then
+	echo "STARTED"
+    else
+	echo "STOPPED"
+    fi
+}
+
+STATE=`getState`
+
+USER=`whoami`
+
+function start()
+{
+    if [ "$STATE" = "STARTED" ]
+        then
+        echo "Already started"
+	return 1
+    else
+        EXE="/usr/local/pnf/i3tv/env-shell.sh /usr/local/pnf/i3tv/i3tv.py &> /dev/null & "
+	if [ "$USER" = "root" ]
+	    then
+	    su pnf -c "nohup $EXE"
+	else
+	    nohup $EXE
+	fi
+	return 0
+    fi
+}
+
+function stop()
+{
+    if [ "$STATE" = "STARTED" ]
+        then
+        EXE=$PNF_DIR/jeb/bin/kill-jebsystem-dead
+	if [ "$USER" = "root" ]
+	    then
+	    su pnf -c "$EXE " >& /dev/null
+	else
+	    nohup $EXE >& /dev/null
+	fi
+	return 0
+    else
+        echo "Already stopped"
+	return 1
+    fi
+}
+
+case $1 in 
+    start)
+	if start
+	    then
+	    action $"starting jebserver...." true
+	else
+	    action $"starting jebserver...." false
+	fi
+        ;;
+    stop)
+	if stop
+	    then
+	    action $"stopping jebserver...." true
+	else
+	    action $"stopping jebserver...." false
+	fi
+        ;;
+    restart)
+	if stop
+	    then
+	    action $"stopping jebserver...." true
+	else
+	    action $"stopping jebserver...." false
+	fi
+	sleep 2
+	STATE=`getState`
+	if start
+	    then
+	    action $"starting jebserver...." true
+	else
+	    action $"starting jebserver...." false
+	fi
+        ;;
+    status)
+        echo "status ---> `getState`"
+        ;;
+    *)
+        usage
+        ;;
+esac
+
+
